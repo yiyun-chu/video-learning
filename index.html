@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AB Testing</title>
+<style>
+  :root { --w: 820px; --gap: 18px; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#fafafa; color:#111; }
+  .wrap { max-width: var(--w); margin: 40px auto; padding: 0 16px; }
+  .card { background:#fff; border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,.06); padding:28px; }
+  h1,h2 { margin:0 0 12px; }
+  .btnrow { display:flex; gap:12px; margin-top:22px; }
+  button { border:0; padding:12px 16px; border-radius:10px; cursor:pointer; background:#1f6feb; color:#fff; font-weight:600; }
+  button.secondary { background:#e9eef7; color:#163a76; }
+  button:disabled { background:#ccc; color:#666; cursor:not-allowed; }
+  .hidden { display:none; }
+  .quiz-item { margin:14px 0 18px; padding:14px; border-radius:12px; background:#f8fafc; }
+  .vid { width:100%; max-width:var(--w); aspect-ratio:16/9; background:#000; border-radius:12px; }
+  .input { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #d0d7de; font-size:16px; }
+  .muted { color:#555; font-size:14px; }
+  .hr { height:1px; background:#eee; margin:16px 0; }
+  .list { margin:0; padding-left:1.2rem; }
+  #log-container {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 400px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-size: 12px;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Your existing HTML content remains the same -->
+  <div id="screen-intro" class="card">
+    <h1>Welcome to the class!</h1>
+    <p>There are videos here for you to watch. Check it out.</p>
+    <ul class="list">
+      <li>Rule: Watch the videos attentively.</li>
+      <li>Here is the video that cover XYZ topic.</li>
+    </ul>
+    <div class="btnrow">
+      <button id="go-id">Continue</button>
+    </div>
+  </div>
+
+  <div id="screen-id" class="card hidden">
+    <h2>Please input your Andrew ID</h2>
+    <input id="participant-id" class="input" placeholder="paste your Andrew ID" />
+    <div class="btnrow">
+      <button class="secondary" id="back-1">← Back</button>
+      <button id="to-pre">→ Continue</button>
+    </div>
+  </div>
+
+  <div id="screen-pre" class="card hidden">
+    <h2>Pre-quiz</h2>
+    <p class="muted">Answer a few questions before the video.</p>
+    <div id="pre-quiz"></div>
+    <div class="btnrow">
+      <button class="secondary" id="back-2">← Back</button>
+      <button id="to-video">→ Watch video</button>
+    </div>
+  </div>
+
+  <div id="screen-video" class="card hidden">
+    <h2>Video</h2>
+    <p class="muted">You can fast-forward/rewind. We record interactions (play, pause, jumps).</p>
+    <video id="lecture" class="vid" controls preload="metadata">
+    <source src="https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1" type="video/mp4">
+    </video>
+    <div class="btnrow">
+      <button id="to-post">→ Continue to post-quiz</button>
+    </div>
+  </div>
+
+  <div id="screen-post" class="card hidden">
+    <h2>Post-quiz</h2>
+    <p class="muted">Questions to test yourself. Answers and interaction logs are recorded.</p>
+    <div id="post-quiz"></div>
+    <div class="btnrow">
+      <button class="secondary" id="back-4">← Back</button>
+      <button id="to-finish">→ Finish</button>
+    </div>
+  </div>
+
+  <div id="screen-done" class="card hidden">
+    <h2>Thank you!</h2>
+    <p>Your response has been recorded.</p>
+  </div>
+</div>
+
+<div id="log-container" class="hidden">
+  <h3>Event Log</h3>
+  <div id="event-log"></div>
+</div>
+
+<script>
+/*** === CONFIG === ***/
+// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxNqTvbABez4g3el3ldIdWl7fjtTsnzP0CuUryunpiSuVAG5PNRpoVxz8gxsh5w1vVw_g/exec'; // version 1
+// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbz6Kr1DXzG8wz5LPi-TappL8NlXlSB4qK6APXbWYWerK2li9vv4_dpxt24r8Sl5bMSi/exec'; // version 2 (raw)
+// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbyzDbFKg4spe4ocWrGnk3poGZidP-p9856Gwft5T-885XBYN25QsmzTfsEKxeGKQq4nhw/exec'; // version 2 (raw + t)
+// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbygqv_l6-ak6_CiGt5axEdaiZQeQwxoMFCi3DVEtV4UTp2cRrH8DMKxGlkmihc3dlVlwA/exec'; // version 2 (raw + t + seq)
+const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwKYZXyvN_USlF0_VRBrDpPZ4WbGuHQpKVRLN0zMhhBaAihjKHNGiI1txu3THaj-C6E/exec'; // version 3 (batch)
+
+
+const MAX_VIDEO_MINUTES = 20;
+
+/*** === STATE & UTIL === ***/
+const sessionId = crypto.randomUUID();
+let participantId = '';
+let page = 'intro';
+let sessionStartTime = Date.now(); // Track overall session start time
+let eventCounter = 0; // 
+let eventQueue = []; // <-- ADD: Queue to hold events
+let batchTimer = null; // <-- ADD: Timer for sending batches
+
+const BATCH_INTERVAL = 3000; // Send events every 3 seconds
+const MAX_QUEUE_SIZE = 20;   // Or when 20 events have collected
+
+// Function to format time with 2 decimal places
+function fmt(t) {
+  return Number(t || 0).toFixed(2);
+}
+
+// Add a log to the visible log container
+function addToLog(message) {
+  const logContainer = document.getElementById('event-log');
+  const logEntry = document.createElement('div');
+  logEntry.textContent = message;
+  logContainer.appendChild(logEntry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function sendBatch(isUnloading = false) {
+  if (eventQueue.length === 0) return;
+
+  // Make a copy of the queue and clear the original immediately
+  const batchToSend = [...eventQueue];
+  eventQueue = [];
+
+  const data = JSON.stringify(batchToSend); // Send as an array of events
+
+  // Use sendBeacon for unloading, as it's more reliable
+  if (isUnloading) {
+    navigator.sendBeacon?.(LOGGER_URL, new Blob([data], { type: 'text/plain' }));
+  } else {
+    fetch(LOGGER_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: data,
+      keepalive: true // Important for requests that might happen near page unload
+    }).catch(err => {
+      console.error('Failed to send event batch:', err);
+      // If sending fails, add the events back to the front of the queue to retry
+      eventQueue.unshift(...batchToSend);
+    });
+  }
+}
+
+function logEvent(event, payload = {}, videoTime = null) {
+  eventCounter++;
+  const sessionTime = (Date.now() - sessionStartTime) / 1000;
+  const eventData = {
+    sessionId,
+    participantId,
+    page,
+    event,
+    videoTime,
+    payload,
+    sessionTime,
+    timestamp: Date.now(),
+    sequence: eventCounter
+  };
+
+  // --- Display in UI immediately ---
+  document.getElementById('log-container').classList.remove('hidden');
+  const displaySessionTime = fmt(sessionTime);
+  let logMessage = `[${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
+  if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
+  if (Object.keys(payload).length > 0) logMessage += ` (${JSON.stringify(payload)})`;
+  addToLog(logMessage);
+  // --- End UI Display ---
+
+  eventQueue.push(eventData); // Add event data to the queue
+
+  // If the queue is full, send immediately
+  if (eventQueue.length >= MAX_QUEUE_SIZE) {
+    clearTimeout(batchTimer); // Clear any existing timer
+    sendBatch();
+    return;
+  }
+
+  // Otherwise, reset the timer to send after a delay
+  clearTimeout(batchTimer);
+  batchTimer = setTimeout(sendBatch, BATCH_INTERVAL);
+}
+
+let currentScreenId = 'screen-intro';
+let hasNavigatedForward = false; // Track if user has moved forward
+
+function show(id) {
+  if (currentScreenId === 'screen-video' && id !== 'screen-video') {
+    pauseVideoIfPlaying('nav-away');
+  }
+
+  document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  currentScreenId = id;
+}
+
+function ts() { return new Date().toISOString().replace('T',' ').slice(0,19); }
+
+// Get session time in seconds with 2 decimal places
+function getSessionTime() {
+  return Number(((Date.now() - sessionStartTime) / 1000).toFixed(2));
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && currentScreenId === 'screen-video') {
+    pauseVideoIfPlaying('tab-hidden');
+  }
+});
+// Place this with your other event listeners like 'visibilitychange'
+window.addEventListener('beforeunload', () => {
+  // Make sure to stop the video and log the event before sending the final batch
+  if (currentScreenId === 'screen-video') {
+    pauseVideoIfPlaying('unload');
+  }
+  // Send any remaining events in the queue. `true` uses sendBeacon for reliability.
+  sendBatch(true); 
+});
+
+/*** === QUIZZES === ***/
+const preQuestions = [
+  { no: 1, text: 'Pre Q1', options: ['A','B','C','D'] },
+  { no: 2, text: 'Pre Q2', options: ['A','B','C','D'] },
+  { no: 3, text: 'Pre Q3', options: ['A','B','C','D'] },
+  { no: 4, text: 'Pre Q4', options: ['A','B','C','D'] },
+  { no: 5, text: 'Pre Q5', options: ['A','B','C','D'] },
+];
+
+const postQuestions = [
+  { no: 6,  text: 'Post Q1',  options: ['A','B','C','D'] },
+  { no: 7,  text: 'Post Q2',  options: ['A','B','C','D'] },
+  { no: 8,  text: 'Post Q3',  options: ['A','B','C','D'] },
+  { no: 9,  text: 'Post Q4',  options: ['A','B','C','D'] },
+  { no: 10, text: 'Post Q5',  options: ['A','B','C','D'] },
+];
+
+function renderQuiz(containerId, items) {
+  const box = document.getElementById(containerId);
+  box.innerHTML = '';
+  for (const q of items) {
+    const wrap = document.createElement('div');
+    wrap.className = 'quiz-item';
+    wrap.innerHTML = `<div><strong>Question ${q.no}.</strong> ${q.text}</div>`;
+    const name = `q-${q.no}`;
+    q.options.forEach((opt, i) => {
+      const id = `${name}-${i}`;
+      const row = document.createElement('div');
+      row.innerHTML = `
+        <label>
+          <input type="radio" name="${name}" value="${opt}" id="${id}">
+          <span> ${opt}</span>
+        </label>`;
+      row.querySelector('input').addEventListener('change', (e) => {
+        logEvent(`questionNo ${q.no} select`, { answer: opt });
+        console.log(`${ts()} --> questionNo ${q.no}, Select option ${opt}`);
+      });
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+}
+
+/*** === VIDEO LOGGING === ***/
+const video = document.getElementById('lecture');
+
+function pauseVideoIfPlaying(reason = 'nav-away') {
+  if (!video) return;
+  if (!video.paused) {
+    const sessionTime = getSessionTime();
+    const videoTime = Number(video.currentTime.toFixed(2));
+    logEvent(`video-pause`, { reason }, video.currentTime);
+    console.log(`At ${sessionTime} video stop at ${videoTime}`);
+    try { video.pause(); } catch (_) {}
+  }
+}
+
+// Enhanced video tracking state
+let videoStartTime = null;     // When video playback started (for session timing)
+let hasEverPlayed = false;     // Whether video has been played at all
+let lastVideoTime = 0;         // Last recorded video time for jump detection
+let isSeeking = false;         // Flag to track if user is seeking
+
+const JUMP_THRESHOLD = 0.5;    // Minimum seconds to consider a jump
+
+function logVideoEvent(eventType, videoPosition = null, extraData = {}) {
+  const sessionTime = getSessionTime();
+  const videoTime = videoPosition !== null ? fmt(videoPosition) : (video ? fmt(video.currentTime) : '0.00');
+
+  // Format the console output to match your desired format
+  let message = `At ${fmt(sessionTime)}`;
+
+  switch(eventType) {
+    case 'play':
+      message += ` video play at ${videoTime}`;
+      break;
+    case 'pause':
+      message += ` video pause at ${videoTime}`;
+      break;
+    case 'jump':
+      message += ` video jump from ${fmt(extraData.from)} to ${fmt(extraData.to)}`;
+      break;
+    case 'volume':
+      if (video.muted) {
+        message += ` video muted at ${videoTime}`;
+      } else {
+        message += ` video volume ${Math.round(video.volume * 100)}% at ${videoTime}`;
+      }
+      break;
+    case 'speed':
+      message += ` video speed changed to ${video.playbackRate}x at ${videoTime}`;
+      break;
+    case 'fullscreen-enter':
+      message += ` video entered fullscreen at ${videoTime}`;
+      break;
+    case 'fullscreen-exit':
+      message += ` video exited fullscreen at ${videoTime}`;
+      break;
+    case 'ended':
+      message += ` video ended at ${videoTime}`;
+      break;
+    case 'stop':
+      message += ` video stop at ${videoTime}`;
+      break;
+  }
+
+  console.log(message);
+
+  // Send to server with proper event names
+  if (eventType === 'jump') {
+    logEvent('video-jump', extraData, video ? video.currentTime : 0);
+  } else {
+    logEvent(`video-${eventType}`, extraData, video ? video.currentTime : 0);
+  }
+}
+
+function setupVideoLogging() {
+  if (!video) return;
+
+  // Reset state when video loads
+  video.addEventListener('loadedmetadata', () => {
+    videoStartTime = null;
+    hasEverPlayed = false;
+    lastVideoTime = 0;
+    isSeeking = false;
+    logEvent('video-loaded', { duration: video.duration }, 0);
+  });
+
+  video.addEventListener('play', () => {
+    if (!hasEverPlayed) {
+      // First time playing - log start
+      hasEverPlayed = true;
+      videoStartTime = Date.now();
+      lastVideoTime = video.currentTime;
+      logVideoEvent('play', video.currentTime);
+    } else {
+      // Resume from pause
+      logVideoEvent('play', video.currentTime);
+    }
+  });
+
+  video.addEventListener('pause', () => {
+    if (hasEverPlayed) {
+      logVideoEvent('pause', video.currentTime);
+    }
+  });
+
+  // Track seeking for jumps
+  video.addEventListener('seeking', () => {
+    isSeeking = true;
+  });
+
+  video.addEventListener('seeked', () => {
+    if (isSeeking) {
+      const from = lastVideoTime;
+      const to = video.currentTime;
+
+      // Only log jump if it's significant
+      if (Math.abs(to - from) >= JUMP_THRESHOLD) {
+        logVideoEvent('jump', null, { from, to });
+      }
+
+      isSeeking = false;
+      lastVideoTime = to;
+    }
+  });
+
+  // Update lastVideoTime periodically during playback
+  setInterval(() => {
+    if (video && !video.paused && !isSeeking) {
+      lastVideoTime = video.currentTime;
+    }
+  }, 500);
+
+  // Volume changes
+  video.addEventListener('volumechange', () => {
+    if (hasEverPlayed) {
+      logVideoEvent('volume', video.currentTime);
+    }
+  });
+
+  // Playback rate changes (speed)
+  video.addEventListener('ratechange', () => {
+    if (hasEverPlayed) {
+      logVideoEvent('speed', video.currentTime);
+    }
+  });
+
+  // Video ended
+  video.addEventListener('ended', () => {
+    logVideoEvent('ended', video.currentTime);
+  });
+
+  // Fullscreen changes
+  document.addEventListener('fullscreenchange', () => {
+    if (hasEverPlayed && currentScreenId === 'screen-video') {
+      const isFullscreen = document.fullscreenElement !== null;
+      logVideoEvent(isFullscreen ? 'fullscreen-enter' : 'fullscreen-exit', video.currentTime);
+    }
+  });
+
+  // Error handling
+  video.addEventListener('error', (e) => {
+    logEvent('video-error', {
+      error: video.error ? video.error.code : 'unknown',
+      message: video.error ? video.error.message : 'unknown error'
+    }, video.currentTime);
+  });
+}
+
+
+/*** === BACK NAVIGATION LOCKING === ***/
+function lockBackNavigation() {
+  // Disable all back buttons
+  document.querySelectorAll('button.secondary').forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+    btn.title = 'Back navigation is disabled after moving forward';
+  });
+}
+
+/*** === NAVIGATION === ***/
+function enterPage(name) {
+  page = name;
+  logEvent('enter-page', { at: ts() });
+}
+
+document.getElementById('go-id').addEventListener('click', () => {
+  show('screen-id');
+  enterPage('check-prolific-id');
+});
+
+document.getElementById('back-1').addEventListener('click', () => {
+  if (!hasNavigatedForward) {
+    show('screen-intro');
+    enterPage('intro');
+  }
+});
+
+document.getElementById('to-pre').addEventListener('click', () => {
+  const val = document.getElementById('participant-id').value.trim();
+  if (!val) { alert('Please paste your ID'); return; }
+  participantId = val;
+  hasNavigatedForward = true;
+  lockBackNavigation();
+  show('screen-pre');
+  enterPage('pre-test');
+});
+
+document.getElementById('back-2').addEventListener('click', () => {
+  if (!hasNavigatedForward) {
+    show('screen-id');
+    enterPage('check-prolific-id');
+  }
+});
+
+document.getElementById('to-video').addEventListener('click', () => {
+  // Validate pre-quiz answers
+  const unanswered = validateQuizAnswers('pre-quiz', preQuestions);
+  if (unanswered.length > 0) {
+    showValidationError(unanswered);
+    logEvent('pre-quiz-incomplete', { unansweredQuestions: unanswered });
+    return;
+  }
+
+  logEvent('pre-quiz-complete');
+  show('screen-video');
+  enterPage('video');
+  setupVideoLogging();
+});
+
+document.getElementById('to-post').addEventListener('click', () => {
+  // Log video stop when leaving video page
+  if (video && hasEverPlayed) {
+    logVideoEvent('stop', video.currentTime);
+  }
+  show('screen-post');
+  enterPage('post-quiz-1');
+});
+
+document.getElementById('back-4').addEventListener('click', () => {
+  if (!hasNavigatedForward) {
+    show('screen-video');
+    enterPage('video');
+  }
+});
+
+document.getElementById('to-finish').addEventListener('click', () => {
+  // Validate post-quiz answers
+  const unanswered = validateQuizAnswers('post-quiz', postQuestions);
+  if (unanswered.length > 0) {
+    showValidationError(unanswered);
+    logEvent('post-quiz-incomplete', { unansweredQuestions: unanswered });
+    return;
+  }
+
+  logEvent('post-quiz-complete');
+  show('screen-done');
+  enterPage('finish');
+
+  // *** THE FIX IS HERE ***
+  // Force sending the final batch of events immediately upon completion.
+  clearTimeout(batchTimer); // Clear any pending timer
+  sendBatch();             // Send the queue now
+});
+
+// === QUIZ VALIDATION ===
+function validateQuizAnswers(containerId, items) {
+  const missing = [];
+  for (const q of items) {
+    const picked = document.querySelector(`input[name="q-${q.no}"]:checked`);
+    if (!picked) missing.push(q.no);
+  }
+  return missing;
+}
+
+function showValidationError(unanswered) {
+  // Clear previous highlights
+  document.querySelectorAll('.quiz-item').forEach(el => {
+    el.style.boxShadow = '';
+  });
+
+  // Add highlight to each missing one
+  unanswered.forEach(no => {
+    const anyInput = document.querySelector(`input[name="q-${no}"]`);
+    const wrap = anyInput ? anyInput.closest('.quiz-item') : null;
+    if (wrap) wrap.style.boxShadow = 'inset 0 0 0 2px #ef4444';
+  });
+
+  // Scroll to the first unanswered
+  const first = unanswered[0];
+  const firstInput = document.querySelector(`input[name="q-${first}"]`);
+  firstInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  alert(`Please answer question(s): ${unanswered.join(', ')}`);
+}
+
+/*** === INIT === ***/
+renderQuiz('pre-quiz', preQuestions);
+renderQuiz('post-quiz', postQuestions);
+enterPage('intro');
+</script>
+</body>
+</html>
