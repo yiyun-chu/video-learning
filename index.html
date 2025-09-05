@@ -182,7 +182,7 @@ function logEvent(event, payload = {}, videoTime = null) {
   };
 
   // --- Display in UI immediately ---
-  document.getElementById('log-container').classList.remove('hidden');
+  // document.getElementById('log-container').classList.remove('hidden');
   const displaySessionTime = fmt(sessionTime);
   let logMessage = `[${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
   if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
