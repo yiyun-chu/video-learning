@@ -110,13 +110,8 @@ z-index: 1000;
 <div id="event-log"></div>
 </div>
 <script>
+
 /*** === CONFIG === ***/
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxNqTvbABez4g3el3ldIdWl7fjtTsnzP0CuUryunpiSuVAG5PNRpoVxz8gxsh5w1vVw_g/exec'; // version 1
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbz6Kr1DXzG8wz5LPi-TappL8NlXlSB4qK6APXbWYWerK2li9vv4_dpxt24r8Sl5bMSi/exec'; // version 2 (raw)
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbyzDbFKg4spe4ocWrGnk3poGZidP-p9856Gwft5T-885XBYN25QsmzTfsEKxeGKQq4nhw/exec'; // version 2 (raw + t)
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbygqv_l6-ak6_CiGt5axEdaiZQeQwxoMFCi3DVEtV4UTp2cRrH8DMKxGlkmihc3dlVlwA/exec'; // version 2 (raw + t + seq)
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwKYZXyvN_USlF0_VRBrDpPZ4WbGuHQpKVRLN0zMhhBaAihjKHNGiI1txu3THaj-C6E/exec'; // version 3 (batch)
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxR8x60w4MOGZSDRdoAO5-5hYgKb1wRxbdlDa5dX6G29_tVDKJ4wliICcIN4XnP-AT0lQ/exec'; // version 4 (nodup)
 const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxIvvYDyb-9eAPb9VME6XthKC_3Gzlg5u7LZhwEOjjBEEeXk8SrWUZaCqsMS75ZzuNGMw/exec'; //version 4 (dup-exp)
 
 
@@ -190,7 +185,7 @@ sequence: eventCounter
 };
 
 // --- Display ---
-document.getElementById('log-container').classList.remove('hidden');
+// document.getElementById('log-container').classList.remove('hidden');
 const displaySessionTime = fmt(sessionTime);
 let logMessage = `[${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
 if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
