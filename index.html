@@ -41,29 +41,29 @@ z-index: 1000;
 <div class="wrap">
 <!-- Your existing HTML content remains the same -->
 <div id="screen-intro" class="card">
-<h1>Welcome to the class!</h1>
+<h1>Welcome to the Managing Disruptive Technologies course!</h1>
 <p>There are videos here for you to watch. Check it out.</p>
 <ul class="list">
-<li>Rule: Watch the videos attentively.</li>
+<li>Rule: Please complete all answers on your own. AI tools are not allowed.</li>
 <li>Here is the video that cover XYZ topic.</li>
 </ul>
 <div class="btnrow">
   <button id="fullscreen-btn">Enter Fullscreen to Continue</button>
 </div>
-<p class="muted">⚠️ You must stay in <strong>fullscreen</strong> during the session. <strong>Exiting fullscreen will end the study immediately.</strong>
-</p>
+<p class="muted">⚠️ <strong>You must stay in fullscreen during the session. Exiting fullscreen will end the study immediately</strong>. <br>
+Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt</span>.</p>
 </div>
 <div id="screen-id" class="card hidden">
 <h2>Please input your Andrew ID</h2>
-<input id="participant-id" class="input" placeholder="paste your Andrew ID" />
+<input id="participant-id" class="input" placeholder="input your Andrew ID" />
 <div class="btnrow">
 <button class="secondary" id="back-1">← Back</button>
 <button id="to-pre">→ Continue</button>
 </div>
 </div>
 <div id="screen-verifying" class="card hidden">
-  <h2>Verifying your ID…</h2>
-  <p class="muted">Please wait a moment while we check your eligibility.</p>
+  <h2>Verifying your Andrew ID…</h2>
+  <p class="muted">Please wait a moment while we check your eligibility. This can take up to ~10 seconds.</p>
   <div style="background:#eee;border-radius:8px;overflow:hidden;margin-top:16px;">
     <div id="verify-progress" style="height:14px;width:0;background:#1f6feb;transition:width 0.3s ease;"></div>
   </div>
@@ -84,7 +84,7 @@ z-index: 1000;
 <div id="screen-video" class="card hidden">
 <h2>Video</h2>
 <p class="muted">You can fast-forward/rewind. We record interactions (play, pause, jumps).</p>
-<video id="lecture" class="vid" controls preload="metadata">
+<video id="lecture" class="vid" controls controlsList="nodownload" preload="metadata">
 <source src="https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1" type="video/mp4">
 </video>
 <div class="btnrow">
@@ -111,7 +111,6 @@ z-index: 1000;
 </div>
 <script>
 /*** === CONFIG === ***/
-// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxIvvYDyb-9eAPb9VME6XthKC_3Gzlg5u7LZhwEOjjBEEeXk8SrWUZaCqsMS75ZzuNGMw/exec'; //version 4 (dup-exp)
 const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwumT4WeBIHVGeqpQsvexuconnMrN70mOuUi91h7R3sM5qDBFmkxiFROUguUl5e0t4q6A/exec'; //version 4 (dup-exp)
 
 const VIDEOS = [
