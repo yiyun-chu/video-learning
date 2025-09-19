@@ -17,7 +17,7 @@ button:disabled { background:#ccc; color:#666; cursor:not-allowed; }
 .hidden { display:none; }
 .quiz-item { margin:14px 0 18px; padding:14px; border-radius:12px; background:#f8fafc; }
 .vid { width:100%; max-width:var(--w); aspect-ratio:16/9; background:#000; border-radius:12px; }
-.input { width:100%; padding:12px 14px; border-radius:10px; border:1px solid #d0d7de; font-size:16px; }
+.input { display: block; width:100%; max-width: 100%; box-sizing: border-box; padding:12px 14px; border-radius:10px; border:1px solid #d0d7de; font-size:16px; }
 .muted { color:#555; font-size:14px; }
 .hr { height:1px; background:#eee; margin:16px 0; }
 .list { margin:0; padding-left:1.2rem; }
@@ -110,10 +110,14 @@ z-index: 1000;
 <div id="event-log"></div>
 </div>
 <script>
-
 /*** === CONFIG === ***/
-const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxIvvYDyb-9eAPb9VME6XthKC_3Gzlg5u7LZhwEOjjBEEeXk8SrWUZaCqsMS75ZzuNGMw/exec'; //version 4 (dup-exp)
+// const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbxIvvYDyb-9eAPb9VME6XthKC_3Gzlg5u7LZhwEOjjBEEeXk8SrWUZaCqsMS75ZzuNGMw/exec'; //version 4 (dup-exp)
+const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwumT4WeBIHVGeqpQsvexuconnMrN70mOuUi91h7R3sM5qDBFmkxiFROUguUl5e0t4q6A/exec'; //version 4 (dup-exp)
 
+const VIDEOS = [
+  "https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1", // Treatment 0 - Psy
+  "https://www.dropbox.com/scl/fi/62h7npfuualeoi0kia1vz/RCII-U4-S3.mp4?rlkey=rfavu6e58l5kt2lnu6pfgik4v&st=qrb9d1ej&raw=1",  // Treatment 1 - Graph
+];
 
 const MAX_VIDEO_MINUTES = 20;
 
@@ -185,7 +189,7 @@ sequence: eventCounter
 };
 
 // --- Display ---
-// document.getElementById('log-container').classList.remove('hidden');
+//document.getElementById('log-container').classList.remove('hidden');
 const displaySessionTime = fmt(sessionTime);
 let logMessage = `[${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
 if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
@@ -512,8 +516,6 @@ document.getElementById('to-pre').addEventListener('click', async () => {
   if (!val) { alert('Please paste your ID'); return; }
 
   participantId = val;
-  hasNavigatedForward = true;
-  lockBackNavigation();
 
   // Show verifying screen
   show('screen-verifying');
@@ -523,7 +525,7 @@ document.getElementById('to-pre').addEventListener('click', async () => {
   const bar = document.getElementById('verify-progress');
   bar.style.width = "0%";
 
-  // Fake progress animation (up to 90%)
+  // Fake progress animation
   let progress = 0;
   const interval = setInterval(() => {
     if (progress < 90) {
@@ -543,21 +545,42 @@ document.getElementById('to-pre').addEventListener('click', async () => {
     clearInterval(interval);
     bar.style.width = "100%"; // complete
 
-    // Delay slightly to let the bar reach 100%
     setTimeout(() => {
       if (result.blocked) {
         show('screen-blocked');
         enterPage('blocked');
       } else {
+        // --- NEW: Video assignment logic ---
+        if (typeof result.treatment === 'undefined') {
+          throw new Error("Server did not return a video treatment assignment.");
+        }
+
+        const treatmentId = result.treatment; // Will be 0 or 1
+        const videoUrl = VIDEOS[treatmentId];
+
+        // Update the video player's source
+        const video = document.getElementById('lecture');
+        const sourceEl = video.querySelector('source');
+        if (sourceEl) {
+          sourceEl.src = videoUrl;
+          video.load(); // This is crucial to make the browser load the new video
+        }
+
+        logEvent('assign-treatment', { treatment: treatmentId });
+        // --- END of new logic ---
+
+        // Now lock back-navigation and move to the next screen
+        hasNavigatedForward = true;
+        lockBackNavigation();
         show('screen-pre');
         enterPage('pre-test');
       }
     }, 500);
   } catch (err) {
     clearInterval(interval);
-    console.error("Status check failed:", err);
-    alert("Could not verify your ID, please try again.");
-    show('screen-id');
+    console.error("Status check or video assignment failed:", err);
+    alert("Could not verify your ID. Please try again.");
+    show('screen-id'); // Go back to the ID screen on error
     enterPage('check-prolific-id');
   }
 });
