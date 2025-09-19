@@ -39,7 +39,6 @@ z-index: 1000;
 </head>
 <body>
 <div class="wrap">
-<!-- Your existing HTML content remains the same -->
 <div id="screen-intro" class="card">
 <h1>Welcome to the Managing Disruptive Technologies course!</h1>
 <p>There are videos here for you to watch. Check it out.</p>
@@ -110,6 +109,7 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 <div id="event-log"></div>
 </div>
 <script>
+
 /*** === CONFIG === ***/
 const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwumT4WeBIHVGeqpQsvexuconnMrN70mOuUi91h7R3sM5qDBFmkxiFROUguUl5e0t4q6A/exec'; //version 4 (dup-exp)
 
@@ -497,7 +497,7 @@ document.getElementById('fullscreen-btn').addEventListener('click', async () => 
   try {
     await document.documentElement.requestFullscreen();
     show('screen-id');
-    enterPage('check-prolific-id');
+    enterPage('check-andrew-id');
   } catch (err) {
     alert("Please allow fullscreen mode to continue.");
   }
@@ -549,7 +549,7 @@ document.getElementById('to-pre').addEventListener('click', async () => {
         show('screen-blocked');
         enterPage('blocked');
       } else {
-        // --- NEW: Video assignment logic ---
+        // --- Video assignment logic ---
         if (typeof result.treatment === 'undefined') {
           throw new Error("Server did not return a video treatment assignment.");
         }
@@ -566,7 +566,6 @@ document.getElementById('to-pre').addEventListener('click', async () => {
         }
 
         logEvent('assign-treatment', { treatment: treatmentId });
-        // --- END of new logic ---
 
         // Now lock back-navigation and move to the next screen
         hasNavigatedForward = true;
@@ -580,44 +579,14 @@ document.getElementById('to-pre').addEventListener('click', async () => {
     console.error("Status check or video assignment failed:", err);
     alert("Could not verify your ID. Please try again.");
     show('screen-id'); // Go back to the ID screen on error
-    enterPage('check-prolific-id');
+    enterPage('check-andrew-id');
   }
 });
-
-// document.getElementById('to-pre').addEventListener('click', async () => {
-//   const val = document.getElementById('participant-id').value.trim();
-//   if (!val) { alert('Please paste your ID'); return; }
-
-//   // call server to check status
-//   try {
-//     const resp = await fetch(LOGGER_URL, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'text/plain' },
-//       body: JSON.stringify([{ participantId: val, checkOnly: true }])
-//     });
-//     const result = await resp.json();
-
-//     if (result.blocked) {
-//       alert("⚠️ You have already completed this activity. Only one attempt is allowed.");
-//       return; // stop here
-//     }
-
-//     // otherwise, proceed as usual
-//     participantId = val;
-//     hasNavigatedForward = true;
-//     lockBackNavigation();
-//     show('screen-pre');
-//     enterPage('pre-test');
-//   } catch (err) {
-//     console.error("Status check failed:", err);
-//     alert("Could not verify your ID, please try again.");
-//   }
-// });
 
 document.getElementById('back-2').addEventListener('click', () => {
 if (!hasNavigatedForward) {
 show('screen-id');
-enterPage('check-prolific-id');
+enterPage('check-andrew-id');
 }
 });
 
