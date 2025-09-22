@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>AB Testing</title>
 <style>
-:root { --w: 820px; --gap: 18px; }
+:root { --w: 1600px; --gap: 18px; }
 body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#fafafa; color:#111; }
 .wrap { max-width: var(--w); margin: 40px auto; padding: 0 16px; }
 .card { background:#fff; border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,.06); padding:28px; }
@@ -49,7 +49,7 @@ z-index: 1000;
 <div class="btnrow">
   <button id="fullscreen-btn">Enter Fullscreen to Continue</button>
 </div>
-<p class="muted">⚠️ <strong>You must stay in fullscreen during the session. Exiting fullscreen will end the study immediately</strong>. <br>
+<p class="muted">⚠️ <strong>You must stay in fullscreen during the session. Exiting fullscreen will end the study immediately</strong>. Please also be aware that navigating away from this window will end the session.
 Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt</span>.</p>
 </div>
 <div id="screen-id" class="card hidden">
@@ -83,7 +83,7 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 <div id="screen-video" class="card hidden">
 <h2>Video</h2>
 <p class="muted">You can fast-forward/rewind. We record interactions (play, pause, jumps).</p>
-<video id="lecture" class="vid" controls controlsList="nodownload" preload="metadata">
+<video id="lecture" class="vid" controls controlsList="nodownload nofullscreen" preload="metadata">
 <source src="https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1" type="video/mp4">
 </video>
 <div class="btnrow">
@@ -231,9 +231,19 @@ return Number(((Date.now() - sessionStartTime) / 1000).toFixed(2));
 }
 
 document.addEventListener('visibilitychange', () => {
-if (document.hidden && currentScreenId === 'screen-video') {
-pauseVideoIfPlaying('tab-hidden');
-}
+    // This condition checks if the tab is no longer active.
+    if (document.hidden) {
+        // We only end the session if the user is past the initial setup screens and hasn't already finished.
+        if (!['screen-intro', 'screen-id', 'screen-verifying', 'screen-blocked', 'screen-done'].includes(currentScreenId)) {
+            logEvent('visibility-hidden-forced-exit');
+            pauseVideoIfPlaying('tab-hidden');
+            logEvent('post-quiz-complete', { forced: true, reason: 'visibility-hidden' });
+            show('screen-done');
+            enterPage('finish');
+            clearTimeout(batchTimer);
+            sendBatch(); // Send final logs immediately.
+        }
+    }
 });
 
 window.addEventListener('beforeunload', () => {
@@ -463,10 +473,10 @@ document.addEventListener('fullscreenchange', () => {
       logVideoEvent('fullscreen-enter', video.currentTime);
     }
   } else {
-    if (currentScreenId !== 'screen-intro' && currentScreenId !== 'screen-id') {
+    if (currentScreenId !== 'screen-intro') {
       logEvent('fullscreen-forced-exit');
       pauseVideoIfPlaying('fullscreen-exit');
-      logEvent('post-quiz-complete', { forced: true }); // ✅ mark as done
+      logEvent('post-quiz-complete', { forced: true }); //
       show('screen-done');
       enterPage('finish');
 
