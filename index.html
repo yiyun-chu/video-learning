@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AB Testing</title>
+<title>Video Learning</title>
 <style>
 :root { --w: 1600px; --gap: 18px; }
 body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#fafafa; color:#111; }
@@ -91,13 +91,21 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 </div>
 </div>
 <div id="screen-post" class="card hidden">
-<h2>Post-quiz</h2>
-<p class="muted">Questions to test yourself. Answers and interaction logs are recorded.</p>
-<div id="post-quiz"></div>
-<div class="btnrow">
-<button class="secondary" id="back-4">← Back</button>
-<button id="to-finish">→ Finish</button>
+    <h2>Post-quiz</h2>
+    <p class="muted">Questions to test yourself. Answers and interaction logs are recorded.</p>
+    <div id="post-quiz"></div>
+    <div class="btnrow">
+        <button class="secondary" id="back-4">← Back</button>
+        <button id="to-survey">→ Continue to Survey</button>
+    </div>
 </div>
+<div id="screen-survey" class="card hidden">
+    <h2>Survey</h2>
+    <p class="muted">Please answer these final questions about your experience.</p>
+    <div id="survey-quiz"></div>
+    <div class="btnrow">
+        <button id="to-finish">→ Finish</button>
+    </div>
 </div>
 <div id="screen-done" class="card hidden">
 <h2>Thank you!</h2>
@@ -114,8 +122,8 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwumT4WeBIHVGeqpQsvexuconnMrN70mOuUi91h7R3sM5qDBFmkxiFROUguUl5e0t4q6A/exec'; //version 4 (dup-exp)
 
 const VIDEOS = [
-  "https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1", // Treatment 0 - Psy
-  "https://www.dropbox.com/scl/fi/62h7npfuualeoi0kia1vz/RCII-U4-S3.mp4?rlkey=rfavu6e58l5kt2lnu6pfgik4v&st=qrb9d1ej&raw=1",  // Treatment 1 - Graph
+  "https://www.dropbox.com/scl/fi/350ea5iypwa99mbmd3yim/When-Conditions-Change-So-Does-the-Rate.mp4?rlkey=he9wvbdy2087nujkbrwtg7iey&st=a1uocf1l&raw=1", // Treatment 0
+  "https://www.dropbox.com/scl/fi/vekzd50iegquo1yquphwd/Curve-Your-Enthusiasm-for-Kinetics.mp4?rlkey=67shz1rirk2ankpen9mar1kbx&st=b8wwztxd&raw=1",  // Treatment 1
 ];
 
 const MAX_VIDEO_MINUTES = 20;
@@ -270,6 +278,19 @@ const postQuestions = [
 { no: 8, text: 'Post Q3', options: ['A','B','C','D'] },
 { no: 9, text: 'Post Q4', options: ['A','B','C','D'] },
 { no: 10, text: 'Post Q5', options: ['A','B','C','D'] },
+];
+
+const surveyQuestions = [
+    { no: 1, text: 'survey-1', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 2, text: 'survey-2', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 3, text: 'survey-3', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 4, text: 'survey-4', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 5, text: 'survey-5', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 6, text: 'survey-6', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 7, text: 'survey-7', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 8, text: 'survey-8', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 9, text: 'survey-9', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
+    { no: 10, text: 'survey-10', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
 ];
 
 function renderQuiz(containerId, items) {
@@ -638,23 +659,38 @@ enterPage('video');
 }
 });
 
-document.getElementById('to-finish').addEventListener('click', () => {
-// Validate post-quiz answers
-const unanswered = validateQuizAnswers('post-quiz', postQuestions);
-if (unanswered.length > 0) {
-showValidationError(unanswered);
-logEvent('post-quiz-incomplete', { unansweredQuestions: unanswered });
-return;
-}
+document.getElementById('to-survey').addEventListener('click', () => {
+    // Validate post-quiz answers
+    const unanswered = validateQuizAnswers('post-quiz', postQuestions);
+    if (unanswered.length > 0) {
+        showValidationError(unanswered);
+        logEvent('post-quiz-incomplete', { unansweredQuestions: unanswered });
+        return;
+    }
 
-logEvent('post-quiz-complete');
-show('screen-done');
-enterPage('finish');
-
-// Force sending the final batch of events immediately upon completion.
-clearTimeout(batchTimer); // Clear any pending timer
-sendBatch(); // Send the queue now
+    logEvent('post-quiz-complete');
+    show('screen-survey');
+    enterPage('survey');
 });
+
+document.getElementById('to-finish').addEventListener('click', () => {
+    // Validate survey answers
+    const unanswered = validateQuizAnswers('survey-quiz', surveyQuestions);
+    if (unanswered.length > 0) {
+        showValidationError(unanswered);
+        logEvent('survey-incomplete', { unansweredQuestions: unanswered });
+        return;
+    }
+
+    logEvent('survey-complete');
+    show('screen-done');
+    enterPage('finish');
+
+    // Force sending the final batch of events immediately upon completion.
+    clearTimeout(batchTimer); // Clear any pending timer
+    sendBatch(); // Send the queue now
+});
+
 
 // === QUIZ VALIDATION ===
 function validateQuizAnswers(containerId, items) {
@@ -700,6 +736,7 @@ function showValidationError(unanswered) {
 /*** === INIT === ***/
 renderQuiz('pre-quiz', preQuestions);
 renderQuiz('post-quiz', postQuestions);
+renderQuiz('survey-quiz', surveyQuestions);
 enterPage('intro');
 </script>
 </body>
