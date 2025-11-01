@@ -165,7 +165,6 @@ z-index: 1000;
         <p>Your grade in this quiz is <strong id="grade-display-x" style="color:#1f6feb;">X</strong> points out of <span id="total-q-1"></span>.</p>
         <div id="retake-prompt-box">
             <h3>Improve Your Grade?</h3>
-            <!-- CHANGED: Gave the descriptive paragraph an ID so we can dynamically update its content with the actual score -->
             <p id="retake-prompt-text">We would like to give you a chance to improve your grade. Do you want to try again? If you do, and you get a grade of $\mathbf{Y}$ points, we will give you either $\mathbf{X}$ or $\mathbf{(\mathbf{X}+\mathbf{Y})/2}$ points as your final grade, whichever is the highest.</p>
             <div class="btnrow">
             <button class="secondary" id="prompt-no">No, finish session</button>
@@ -212,7 +211,7 @@ z-index: 1000;
 <script>
 
 /*** === CONFIG === ***/
-const LOGGER_URL = "https://script.google.com/macros/s/AKfycbwwaUBPLxHB5ax2IbZb-qCwYCt9gwMyem1lPoK-iaCWRhxqcWod9VJsZEHfrEPhKHfHZA/exec";
+const LOGGER_URL = "https://script.google.com/macros/s/AKfycbzSa2pAl8Ll1bLndkRP8phOh2AcRsDfTjPCT6I3EkNGGpbTy9m17Q0WX7fxXgDIWQLm/exec";
 const MAX_VIDEO_MINUTES = 20000;
 
 // Video URLs for random assignment
@@ -223,11 +222,11 @@ const VIDEO_B_URL = "https://www.dropbox.com/scl/fi/p5osu3sxg2me61q9w5s5h/NETWOR
 /*** === STATE & UTIL === ***/
 let sessionId = crypto.randomUUID();
 let participantId = '';
-let initialTreatmentGroup = -1; // Persisted treatment from server
-let treatmentGroup = -1;      // CURRENT treatment group for the attempt
-let attemptIndex = 0;         // Current attempt index (1 or 2)
-let postQuizScore = 0;        // Score for the current attempt
-let attempt1Score = -1;       // Stored score from the first attempt
+let initialTreatmentGroup = -1;
+let treatmentGroup = -1;
+let attemptIndex = 0;
+let postQuizScore = 0;
+let attempt1Score = -1;
 let page = 'intro';
 let sessionStartTime = Date.now();
 let eventCounter = 0;
@@ -673,7 +672,6 @@ document.getElementById('to-grade-prompt').addEventListener('click', () => {
         document.getElementById('grade-display-x').textContent = attempt1Score;
         document.getElementById('total-q-1').textContent = total;
 
-        // CHANGED: Added the \textcolor{#1f6feb}{...} command to make the score blue.
         const retakeText = `We would like to give you a chance to improve your grade. Do you want to try again? If you do, and you get a grade of $\\mathbf{Y}$ points, we will give you either $\\mathbf{\\textcolor{#1f6feb}{${attempt1Score}}}$ or $\\mathbf{(\\textcolor{#1f6feb}{${attempt1Score}}+Y)/2}$ points as your final grade, whichever is the highest.`;
         document.getElementById('retake-prompt-text').innerHTML = retakeText;
         
@@ -682,7 +680,13 @@ document.getElementById('to-grade-prompt').addEventListener('click', () => {
     } else if (attemptIndex === 2) {
         document.getElementById('grade-display-y').textContent = postQuizScore;
         document.getElementById('total-q-2').textContent = total;
-        const finalGrade = Math.max(attempt1Score, (attempt1Score + postQuizScore) / 2).toFixed(2);
+        
+        // ======================= START: FORMATTING FIX =======================
+        // This rounds the number to a maximum of 2 decimal places, removing trailing zeros.
+        const rawFinalGrade = Math.max(attempt1Score, (attempt1Score + postQuizScore) / 2);
+        const finalGrade = Math.round(rawFinalGrade * 100) / 100;
+        // ======================== END: FORMATTING FIX ========================
+
         document.getElementById('attempt1-score-display').textContent = attempt1Score;
         document.getElementById('attempt2-score').textContent = postQuizScore;
         document.getElementById('total-q-attempts').textContent = total;
@@ -704,25 +708,24 @@ document.getElementById('prompt-yes').addEventListener('click', () => {
         currentTreatment: treatmentGroup,
         nextTreatment: 1 - treatmentGroup
     });
+    
+    // === ADDED: Log score for attempt 1 when retaking ===
+    logEvent('quiz-score', { score: attempt1Score });
+    
     logEvent('attempt-1-checkpoint', { score: attempt1Score });
     clearTimeout(batchTimer);
     sendBatch();
     
-    // --- CHANGED: Entire block updated to skip the pre-quiz on the second attempt ---
-
-    // 1. Reset state for the new attempt
     sessionId = crypto.randomUUID(); 
     sessionStartTime = Date.now();
     eventCounter = 0;
     attemptIndex = 2;
-    treatmentGroup = 1 - initialTreatmentGroup; // Swap treatment group
+    treatmentGroup = 1 - initialTreatmentGroup;
     
-    // 2. Generate new questions for the post-quiz and prepare it in the background
     generateQuizzes();
-    renderQuiz('post-quiz', postQuestions); // Renders the *new* post-quiz
+    renderQuiz('post-quiz', postQuestions);
     clearAllQuizAnswers();
     
-    // 3. Skip pre-quiz and go directly to the video screen
     const videoSrc = (treatmentGroup === 0) ? VIDEO_A_URL : VIDEO_B_URL;
     video.src = videoSrc;
     video.load();
@@ -735,6 +738,10 @@ document.getElementById('prompt-yes').addEventListener('click', () => {
 
 document.getElementById('prompt-no').addEventListener('click', () => {
     logEvent('retake-declined', { attempt: 1, finalScore: attempt1Score });
+
+    // === ADDED: Log score for attempt 1 when declining retake ===
+    logEvent('quiz-score', { score: attempt1Score });
+
     generateSurveyQuestions();
     renderQuiz('survey-quiz', surveyQuestions);
     show('screen-survey');
@@ -743,6 +750,10 @@ document.getElementById('prompt-no').addEventListener('click', () => {
 
 document.getElementById('to-finish-final').addEventListener('click', () => {
     logEvent('retake-complete', { attempt: 2, scoreY: postQuizScore });
+
+    // === ADDED: Log score for attempt 2 ===
+    logEvent('quiz-score', { score: postQuizScore });
+
     generateSurveyQuestions(); 
     renderQuiz('survey-quiz', surveyQuestions);
     show('screen-survey');
