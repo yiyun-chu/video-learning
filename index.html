@@ -1,9 +1,23 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="utf-t" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Video Learning</title>
+<title>Video</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+          ]
+        });">
+</script>
+
 <style>
 :root { --w: 1600px; --gap: 18px; }
 body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#fafafa; color:#111; }
@@ -15,7 +29,8 @@ button { border:0; padding:12px 16px; border-radius:10px; cursor:pointer; backgr
 button.secondary { background:#e9eef7; color:#163a76; }
 button:disabled { background:#ccc; color:#666; cursor:not-allowed; }
 .hidden { display:none; }
-.quiz-item { margin:14px 0 18px; padding:14px; border-radius:12px; background:#f8fafc; }
+.quiz-item { margin:14px 0 18px; padding:14px; border-radius:12px; background:#f8fafc; line-height: 1.6; }
+.quiz-item img { max-width: 40%; height: auto; border-radius: 8px; margin-top: 10px; }
 .vid { width:100%; max-width:var(--w); aspect-ratio:16/9; background:#000; border-radius:12px; }
 .input { display: block; width:100%; max-width: 100%; box-sizing: border-box; padding:12px 14px; border-radius:10px; border:1px solid #d0d7de; font-size:16px; }
 .muted { color:#555; font-size:14px; }
@@ -39,22 +54,18 @@ z-index: 1000;
 </head>
 <body>
 <div class="wrap">
+
 <div id="screen-intro" class="card">
-<h1>Welcome to the course!</h1>
-<p>There are videos here for you to watch. Check it out.</p>
-<ul class="list">
-<li>Rule: Please complete all answers on your own. AI tools are not allowed.</li>
-<li>Here is the video that covers XYZ topic.</li>
-</ul>
+<h1>Welcome!</h1>
+<p>This session will start with a short pre-quiz, which will not be graded. Please watch the video after this pre-quiz. You will then enter the graded quiz. Once you begin the graded quiz, you will not be able to return to the video. The graded quiz includes six questions covered in the video. Please complete all answers on your own. Using AI tools is not allowed.</p>
 <div class="btnrow">
   <button id="fullscreen-btn">Enter Fullscreen to Continue</button>
 </div>
-<p class="muted">⚠️ <strong>You must stay in fullscreen during the session. Exiting fullscreen will end the study immediately</strong>. Please also be aware that navigating away from this window will end the session.
-Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt</span>.</p>
+<p class="muted">⚠️ <strong>You must stay in full-screen during this entire session. Exiting full-screen or navigating away from this window will end the video and the quiz immediately</strong>.</p>
 </div>
 <div id="screen-id" class="card hidden">
 <h2>Please input your Andrew ID</h2>
-<input id="participant-id" class="input" placeholder="input your Andrew ID" />
+<input id="participant-id" class="input" placeholder="paste your Andrew ID" />
 <div class="btnrow">
 <button class="secondary" id="back-1">← Back</button>
 <button id="to-pre">→ Continue</button>
@@ -62,7 +73,7 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 </div>
 <div id="screen-verifying" class="card hidden">
   <h2>Verifying your Andrew ID…</h2>
-  <p class="muted">Please wait a moment while we check your eligibility. This can take up to ~10 seconds.</p>
+  <p class="muted">Please wait a moment while we check your eligibility. This can take up to 10 seconds.</p>
   <div style="background:#eee;border-radius:8px;overflow:hidden;margin-top:16px;">
     <div id="verify-progress" style="height:14px;width:0;background:#1f6feb;transition:width 0.3s ease;"></div>
   </div>
@@ -73,79 +84,117 @@ Each student has only <span style="font-weight:700; color:#b91c1c;">one attempt<
 </div>
 <div id="screen-pre" class="card hidden">
 <h2>Pre-quiz</h2>
-<p class="muted">Answer a few questions before the video.</p>
+<p class="muted" style="font-style: italic;">The pre-quiz will not be graded. We would just like to gauge your familiarity with the topics and give you a glimpse of what to expect in the graded quiz.</p>
 <div id="pre-quiz"></div>
 <div class="btnrow">
-<button class="secondary" id="back-2">← Back</button>
-<button id="to-video">→ Watch video</button>
+<button id="to-video">→ Continue to video</button>
 </div>
 </div>
+
 <div id="screen-video" class="card hidden">
-<h2>Video</h2>
-<p class="muted">You can fast-forward/rewind. We record interactions (play, pause, jumps).</p>
-<video id="lecture" class="vid" controls controlsList="nodownload nofullscreen" preload="metadata">
-<source src="https://www.dropbox.com/scl/fi/4l6yt4f4ig7c5hrbmpjya/PSY101-Conditioning-and-Learning.mp4?rlkey=uxn2puqpwy6fkgy41r21tn2cj&raw=1" type="video/mp4">
-</video>
-<div class="btnrow">
-<button id="to-post">→ Continue to post-quiz</button>
+    <h2>Video</h2>
+    <p class="muted">Please try your best to learn as much as you can from the video. You can fast-forward/rewind at any time. We record all interactions (play, pause, jumps, etc.).</p>
+    <div id="video-container"></div>
+    <div class="btnrow">
+        <button id="to-post">→ Continue to graded quiz</button>
+    </div>
 </div>
-</div>
+
 <div id="screen-post" class="card hidden">
-    <h2>Post-quiz</h2>
-    <p class="muted">Questions to test yourself. Answers and interaction logs are recorded.</p>
-    <div id="post-quiz"></div>
-    <div class="btnrow">
-        <button class="secondary" id="back-4">← Back</button>
-        <button id="to-survey">→ Continue to Survey</button>
+<h2>Graded quiz</h2>
+<div id="post-quiz"></div>
+<div class="btnrow">
+  <button id="to-grade-prompt">→ Continue</button> 
+</div>
+</div>
+
+<div id="screen-grade-prompt" class="card hidden">
+    <div id="attempt-status-1">
+        <h2>Attempt 1 Complete</h2>
+        <p>Your grade in this quiz is <strong id="grade-display-x" style="color:#1f6feb;">X</strong> points out of <span id="total-q-1"></span>.</p>
+        <div id="retake-prompt-box">
+            <h3>Improve Your Grade?</h3>
+            <!-- CHANGED: Gave the descriptive paragraph an ID so we can dynamically update its content with the actual score -->
+            <p id="retake-prompt-text">We would like to give you a chance to improve your grade. Do you want to try again? If you do, and you get a grade of $\mathbf{Y}$ points, we will give you either $\mathbf{X}$ or $\mathbf{(\mathbf{X}+\mathbf{Y})/2}$ points as your final grade, whichever is the highest.</p>
+            <div class="btnrow">
+            <button class="secondary" id="prompt-no">No, finish session</button>
+            <button id="prompt-yes">Yes, try again (Start new session)</button>
+            </div>
+        </div>
+    </div>
+    <div id="attempt-status-2" class="hidden">
+        <h2>Attempt 2 Complete</h2>
+        <p>Your grade in this quiz is <strong id="grade-display-y" style="color:#1f6feb;">Y</strong> points out of <span id="total-q-2"></span>.</p>
+        <p>Thank you for completing both attempts. Your grade in attempt 1 was <strong id="attempt1-score-display" style="color:#1f6feb;">X</strong> points and your grade in attempt 2 is <strong id="attempt2-score" style="color:#1f6feb;">Y</strong> points (both out of <span id="total-q-attempts"></span>), so your final grade is <strong id="final-score" style="color:#1f6feb;">Z</strong> points out of <span id="total-q-final"></span>.</p>
+        <div class="btnrow">
+            <button id="to-finish-final">→ Continue to Final Survey</button>
+        </div>
     </div>
 </div>
+
 <div id="screen-survey" class="card hidden">
-    <h2>Survey</h2>
-    <p class="muted">Please answer these final questions about your experience.</p>
-    <div id="survey-quiz"></div>
-    <div class="btnrow">
-        <button id="to-finish">→ Finish</button>
-    </div>
+<h2>Survey</h2>
+<p class="muted">Please answer these final questions about your experience.</p>
+<div id="survey-quiz"></div>
+<div class="btnrow">
+<button id="to-finish-from-survey">→ Finish Session</button>
 </div>
+</div>
+
 <div id="screen-done" class="card hidden">
 <h2>Thank you!</h2>
 <p>Your response has been recorded.</p>
 </div>
 </div>
 <div id="log-container" class="hidden">
-<h3>Event Log</h3>
-<div id="event-log"></div>
+    <h3>Event Log</h3>
+    <div id="event-log"></div>
+    <div style="height:1px; background:#ddd; margin: 8px 0;"></div>
+    <strong>Watched Intervals:</strong>
+    <div id="intervals-display" style="font-family: monospace; padding-top: 4px;">
+        [No intervals recorded yet]
+    </div>
 </div>
+
+<video id="lecture" class="vid" controls controlsList="nodownload nofullscreen" preload="metadata" style="display:none;"></video>
+
 <script>
 
 /*** === CONFIG === ***/
-const LOGGER_URL = 'https://script.google.com/macros/s/AKfycbwumT4WeBIHVGeqpQsvexuconnMrN70mOuUi91h7R3sM5qDBFmkxiFROUguUl5e0t4q6A/exec'; //version 4 (dup-exp)
+const LOGGER_URL = "https://script.google.com/macros/s/AKfycbwwaUBPLxHB5ax2IbZb-qCwYCt9gwMyem1lPoK-iaCWRhxqcWod9VJsZEHfrEPhKHfHZA/exec";
+const MAX_VIDEO_MINUTES = 20000;
 
-const VIDEOS = [
-  "https://www.dropbox.com/scl/fi/350ea5iypwa99mbmd3yim/When-Conditions-Change-So-Does-the-Rate.mp4?rlkey=he9wvbdy2087nujkbrwtg7iey&st=a1uocf1l&raw=1", // Treatment 0
-  "https://www.dropbox.com/scl/fi/vekzd50iegquo1yquphwd/Curve-Your-Enthusiasm-for-Kinetics.mp4?rlkey=67shz1rirk2ankpen9mar1kbx&st=b8wwztxd&raw=1",  // Treatment 1
-];
+// Video URLs for random assignment
+const VIDEO_A_URL = "https://www.dropbox.com/scl/fi/013xinrni3awibj87hoh7/network.mp4?rlkey=m7ezusxiqyv77kofbmxr51u2b&st=yphpxhpj&raw=1";
+const VIDEO_B_URL = "https://www.dropbox.com/scl/fi/p5osu3sxg2me61q9w5s5h/NETWORKS_part_1.mp4?rlkey=wihqk1eqoaj4faotpy58na4bt&st=umde0bwl&raw=1";
 
-const MAX_VIDEO_MINUTES = 20;
 
 /*** === STATE & UTIL === ***/
-const sessionId = crypto.randomUUID();
+let sessionId = crypto.randomUUID();
 let participantId = '';
+let initialTreatmentGroup = -1; // Persisted treatment from server
+let treatmentGroup = -1;      // CURRENT treatment group for the attempt
+let attemptIndex = 0;         // Current attempt index (1 or 2)
+let postQuizScore = 0;        // Score for the current attempt
+let attempt1Score = -1;       // Stored score from the first attempt
 let page = 'intro';
-let sessionStartTime = Date.now(); // Track overall session start time
-let eventCounter = 0; //
-let eventQueue = []; // Queue to hold events
-let batchTimer = null; // Timer for sending batches
+let sessionStartTime = Date.now();
+let eventCounter = 0;
+let eventQueue = [];
+let batchTimer = null;
+let easyQuestions = [];
+let mediumQuestions = [];
+let hardQuestions = [];
+let allSurveyQuestions = {};
+let preQuestions = [];
+let postQuestions = [];
+let surveyQuestions = [];
 
-const BATCH_INTERVAL = 3000; // Send events every 3 seconds
-const MAX_QUEUE_SIZE = 20; // Or when 20 events have collected
+const BATCH_INTERVAL = 3000;
+const MAX_QUEUE_SIZE = 20;
 
-// Function to format time with 2 decimal places
-function fmt(t) {
-return Number(t || 0).toFixed(2);
-}
+function fmt(t) { return Number(t || 0).toFixed(2); }
 
-// Add a log to the visible log container
 function addToLog(message) {
 const logContainer = document.getElementById('event-log');
 const logEntry = document.createElement('div');
@@ -155,373 +204,305 @@ logContainer.scrollTop = logContainer.scrollHeight;
 }
 
 function sendBatch(isUnloading = false) {
-if (eventQueue.length === 0) return;
-
-// Make a copy of the queue and clear the original immediately
-const batchToSend = [...eventQueue];
-eventQueue = [];
-
-const data = JSON.stringify(batchToSend); // Send as an array of events
-
-// Use sendBeacon for unloading
-if (isUnloading) {
-navigator.sendBeacon?.(LOGGER_URL, new Blob([data], { type: 'text/plain' }));
-} else {
-fetch(LOGGER_URL, {
-method: 'POST',
-headers: {'Content-Type':'text/plain'},
-body: data,
-keepalive: true // Important for requests that might happen near page unload
-}).catch(err => {
-console.error('Failed to send event batch:', err);
-// If sending fails, add the events back to the front of the queue to retry
-eventQueue.unshift(...batchToSend);
-});
-}
+  if (eventQueue.length === 0) return;
+  const batchToSend = [...eventQueue];
+  eventQueue = [];
+  const data = JSON.stringify(batchToSend);
+  if (isUnloading) {
+    navigator.sendBeacon?.(LOGGER_URL, new Blob([data], { type: 'text/plain' }));
+  } else {
+    fetch(LOGGER_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: data,
+    keepalive: true
+    }).catch(err => {
+    console.error('Failed to send event batch:', err);
+    eventQueue.unshift(...batchToSend);
+    });
+  }
 }
 
 function logEvent(event, payload = {}, videoTime = null) {
-eventCounter++;
-const sessionTime = (Date.now() - sessionStartTime) / 1000;
-const eventData = {
-sessionId,
-participantId,
-page,
-event,
-videoTime,
-payload,
-sessionTime,
-timestamp: Date.now(),
-sequence: eventCounter
-};
-
-// --- Display ---
-//document.getElementById('log-container').classList.remove('hidden');
-const displaySessionTime = fmt(sessionTime);
-let logMessage = `[${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
-if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
-if (Object.keys(payload).length > 0) logMessage += ` (${JSON.stringify(payload)})`;
-addToLog(logMessage);
-// --- End Display ---
-
-eventQueue.push(eventData); // Add event data to the queue
-
-// If the queue is full, send immediately
-if (eventQueue.length >= MAX_QUEUE_SIZE) {
-clearTimeout(batchTimer); // Clear any existing timer
-sendBatch();
-return;
-}
-
-// Otherwise, reset the timer to send after a delay
-clearTimeout(batchTimer);
-batchTimer = setTimeout(sendBatch, BATCH_INTERVAL);
+    eventCounter++;
+    const sessionTime = (Date.now() - sessionStartTime) / 1000;
+    const eventData = {
+        sessionId, participantId, page, event, videoTime,
+        payload, sessionTime, timestamp: Date.now(), sequence: eventCounter,
+        initialTreatmentGroup,
+        treatmentGroup,
+        attemptIndex
+    };
+    const displaySessionTime = fmt(sessionTime);
+    let logMessage = `[A${attemptIndex}_T${treatmentGroup} (Init T${initialTreatmentGroup}) | ${String(eventCounter).padStart(4, '0')}] At ${displaySessionTime} ${event}`;
+    if (videoTime !== null) logMessage += ` at ${fmt(videoTime)}`;
+    if (Object.keys(payload).length > 0) logMessage += ` (${JSON.stringify(payload)})`;
+    addToLog(logMessage);
+    eventQueue.push(eventData);
+    if (eventQueue.length >= MAX_QUEUE_SIZE) {
+        clearTimeout(batchTimer);
+        sendBatch();
+    } else {
+        clearTimeout(batchTimer);
+        batchTimer = setTimeout(sendBatch, BATCH_INTERVAL);
+    }
 }
 
 let currentScreenId = 'screen-intro';
-let hasNavigatedForward = false; // Track if user has moved forward
+const video = document.getElementById('lecture');
 
 function show(id) {
-if (currentScreenId === 'screen-video' && id !== 'screen-video') {
-pauseVideoIfPlaying('nav-away');
-}
-
-document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
-document.getElementById(id).classList.remove('hidden');
-currentScreenId = id;
+  const isSwitchingToVideoPage = id === 'screen-video';
+  const isLeavingVideoPage = currentScreenId === 'screen-video' && !isSwitchingToVideoPage;
+  if (isLeavingVideoPage) {
+    pauseVideoIfPlaying('nav-away');
+    video.style.display = 'none';
+    document.body.appendChild(video);
+  }
+  document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  currentScreenId = id;
+  if (isSwitchingToVideoPage) {
+    watchedIntervals = [];
+    updateIntervalsDisplay();
+    hasEverPlayed = false;
+    currentWatchStart = null;
+    lastVideoTime = 0;
+    const container = document.getElementById(`video-container`);
+    if (container) {
+      container.appendChild(video);
+      video.style.display = 'block';
+    }
+  }
 }
 
 function ts() { return new Date().toISOString().replace('T',' ').slice(0,19); }
 
-// Get session time in seconds with 2 decimal places
-function getSessionTime() {
-return Number(((Date.now() - sessionStartTime) / 1000).toFixed(2));
-}
-
 document.addEventListener('visibilitychange', () => {
-    // This condition checks if the tab is no longer active.
     if (document.hidden) {
-        // We only end the session if the user is past the initial setup screens and hasn't already finished.
-        if (!['screen-intro', 'screen-id', 'screen-verifying', 'screen-blocked', 'screen-done'].includes(currentScreenId)) {
+        if (!['screen-intro', 'screen-id', 'screen-verifying', 'screen-blocked', 'screen-done'].includes(currentScreenId)) { 
             logEvent('visibility-hidden-forced-exit');
             pauseVideoIfPlaying('tab-hidden');
             logEvent('post-quiz-complete', { forced: true, reason: 'visibility-hidden' });
+            logEvent('enter-page', { at: ts(), page: 'finish' });
             show('screen-done');
             enterPage('finish');
             clearTimeout(batchTimer);
-            sendBatch(); // Send final logs immediately.
+            sendBatch();
         }
     }
 });
 
 window.addEventListener('beforeunload', () => {
-// stop the video and log the event before sending the final batch
-if (currentScreenId === 'screen-video') {
-pauseVideoIfPlaying('unload');
-}
-// send any remaining events in the queue.
-sendBatch(true);
+    if (currentScreenId === 'screen-video') {
+        pauseVideoIfPlaying('unload');
+    }
+    if (!['screen-done', 'screen-grade-prompt', 'screen-intro', 'screen-id', 'screen-verifying', 'screen-blocked'].includes(currentScreenId)) {
+        logEvent('enter-page', { at: ts(), page: 'finish' });
+    }
+    sendBatch(true);
 });
 
 /*** === QUIZZES === ***/
-const preQuestions = [
-{ no: 1, text: 'Pre Q1', options: ['A','B','C','D'] },
-{ no: 2, text: 'Pre Q2', options: ['A','B','C','D'] },
-{ no: 3, text: 'Pre Q3', options: ['A','B','C','D'] },
-{ no: 4, text: 'Pre Q4', options: ['A','B','C','D'] },
-{ no: 5, text: 'Pre Q5', options: ['A','B','C','D'] },
-];
+function generateQuizzes() {
+    const shuffle = (arr) => arr.sort(() => 0.5 - Math.random());
+    const selectFromBank = (bank, numToSelect) => {
+        const shuffled = [...bank].sort(() => 0.5 - Math.random());
+        return {
+            selected: shuffled.slice(0, numToSelect),
+            remaining: shuffled.slice(numToSelect)
+        };
+    };
+    const easy = selectFromBank(easyQuestions, 1);
+    const medium = selectFromBank(mediumQuestions, 1);
+    const hard = selectFromBank(hardQuestions, 1);
+    preQuestions = shuffle([...easy.selected, ...medium.selected, ...hard.selected]);
+    const postEasy = selectFromBank(easy.remaining, 2).selected;
+    const postMedium = selectFromBank(medium.remaining, 2).selected;
+    const postHard = selectFromBank(hard.remaining, 2).selected;
+    postQuestions = shuffle([...postEasy, ...postMedium, ...postHard]);
+}
 
-const postQuestions = [
-{ no: 6, text: 'Post Q1', options: ['A','B','C','D'] },
-{ no: 7, text: 'Post Q2', options: ['A','B','C','D'] },
-{ no: 8, text: 'Post Q3', options: ['A','B','C','D'] },
-{ no: 9, text: 'Post Q4', options: ['A','B','C','D'] },
-{ no: 10, text: 'Post Q5', options: ['A','B','C','D'] },
-];
+function renderLatexIn(container) {
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(container, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}
+      ]
+    });
+  } else {
+    setTimeout(() => renderLatexIn(container), 200);
+  }
+}
 
-const surveyQuestions = [
-    { no: 1, text: 'survey-1', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 2, text: 'survey-2', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 3, text: 'survey-3', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 4, text: 'survey-4', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 5, text: 'survey-5', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 6, text: 'survey-6', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 7, text: 'survey-7', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 8, text: 'survey-8', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 9, text: 'survey-9', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-    { no: 10, text: 'survey-10', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'] },
-];
+function clearAllQuizAnswers() {
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.checked = false;
+    });
+}
 
 function renderQuiz(containerId, items) {
-const box = document.getElementById(containerId);
-box.innerHTML = '';
-for (const q of items) {
-const wrap = document.createElement('div');
-wrap.className = 'quiz-item';
-wrap.innerHTML = `<div><strong>Question ${q.no}.</strong> ${q.text}</div>`;
-const name = `q-${q.no}`;
-q.options.forEach((opt, i) => {
-const id = `${name}-${i}`;
-const row = document.createElement('div');
-row.innerHTML = `
-<label>
-<input type="radio" name="${name}" value="${opt}" id="${id}">
-<span> ${opt}</span>
-</label>`;
-row.querySelector('input').addEventListener('change', (e) => {
-logEvent(`questionNo ${q.no} select`, { answer: opt });
-console.log(`${ts()} --> questionNo ${q.no}, Select option ${opt}`);
-});
-wrap.appendChild(row);
-});
-box.appendChild(wrap);
-}
+  const box = document.getElementById(containerId);
+  box.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  for (const q of items) {
+    const wrap = document.createElement('div');
+    wrap.className = 'quiz-item';
+    let questionHTML = `<div><strong>Question.</strong> ${q.content || q.text}</div>`;
+    if (q.imageUrl) {
+      questionHTML += `<img src="${q.imageUrl}" alt="Question image">`;
+    }
+    wrap.innerHTML = questionHTML;
+    const name = `q-${q.id}`;
+    q.options.forEach((opt, i) => {
+      const id = `${name}-${i}`;
+      const labelLetter = letters[i] || String.fromCharCode(65 + i);
+      const row = document.createElement('div');
+      row.innerHTML = `<label><input type="radio" name="${name}" value="${opt}" id="${id}"> <span><strong>${labelLetter}.</strong> ${opt}</span></label>`;
+      row.querySelector('input').addEventListener('change', () => {
+        logEvent('question-select', { questionId: q.id, answer: opt, letter: labelLetter });
+      });
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+  renderLatexIn(box);
 }
 
-/*** === VIDEO LOGGING === ***/
-const video = document.getElementById('lecture');
+function calculateScore(items) {
+    let correct = 0;
+    let total = 0;
+    for (const q of items) {
+        total++;
+        const name = `q-${q.id}`;
+        const picked = document.querySelector(`input[name="${name}"]:checked`)?.value;
+        if (q.correctAnswer && picked === q.correctAnswer) {
+            correct++;
+        }
+    }
+    return { correct, total };
+}
 
 function pauseVideoIfPlaying(reason = 'nav-away') {
-if (!video) return;
-if (!video.paused) {
-const sessionTime = getSessionTime();
-const videoTime = Number(video.currentTime.toFixed(2));
-logEvent(`video-pause`, { reason }, video.currentTime);
-console.log(`At ${sessionTime} video stop at ${videoTime}`);
-try { video.pause(); } catch (_) {}
-}
+	if (!video || video.paused) return;
+	logEvent(`video-pause`, { reason }, video.currentTime);
+	try { video.pause(); } catch (_) {}
 }
 
-// Enhanced video tracking state
-let videoStartTime = null; // When video playback started (for session timing)
-let hasEverPlayed = false; // Whether video has been played at all
-let lastVideoTime = 0; // Last recorded video time for jump detection
-let isSeeking = false; // Flag to track if user is seeking
+let hasEverPlayed = false;
+let lastVideoTime = 0;
+let isSeeking = false;
+let watchedIntervals = [];
+let currentWatchStart = null;
+const JUMP_THRESHOLD = 0.5;
 
-const JUMP_THRESHOLD = 0.5; // Minimum seconds to consider a jump
+function recordWatchedInterval(newInterval) {
+    let [start, end] = newInterval;
+    if (end - start < 1.0) return;
+    let merged = false;
+    for (let i = 0; i < watchedIntervals.length; i++) {
+        const existing = watchedIntervals[i];
+        if (start <= existing[1] + JUMP_THRESHOLD && end >= existing[0] - JUMP_THRESHOLD) {
+            existing[0] = Math.min(start, existing[0]);
+            existing[1] = Math.max(end, existing[1]);
+            merged = true;
+            break; 
+        }
+    }
+    if (!merged) watchedIntervals.push(newInterval);
+    watchedIntervals.sort((a,b) => a[0] - b[0]);
+    for (let i = 0; i < watchedIntervals.length - 1; i++) {
+        if (watchedIntervals[i][1] >= watchedIntervals[i+1][0] - JUMP_THRESHOLD) {
+            watchedIntervals[i][1] = Math.max(watchedIntervals[i][1], watchedIntervals[i+1][1]);
+            watchedIntervals.splice(i+1, 1);
+            i--;
+        }
+    }
+    updateIntervalsDisplay();
+}
 
 function logVideoEvent(eventType, videoPosition = null, extraData = {}) {
-const sessionTime = getSessionTime();
-const videoTime = videoPosition !== null ? fmt(videoPosition) : (video ? fmt(video.currentTime) : '0.00');
-
-// Format the console output to match your desired format
-let message = `At ${fmt(sessionTime)}`;
-
-switch(eventType) {
-case 'play':
-message += ` video play at ${videoTime}`;
-break;
-case 'pause':
-message += ` video pause at ${videoTime}`;
-break;
-case 'jump':
-message += ` video jump from ${fmt(extraData.from)} to ${fmt(extraData.to)}`;
-break;
-case 'volume':
-if (video.muted) {
-message += ` video muted at ${videoTime}`;
-} else {
-message += ` video volume ${Math.round(video.volume * 100)}% at ${videoTime}`;
-}
-break;
-case 'speed':
-message += ` video speed changed to ${video.playbackRate}x at ${videoTime}`;
-break;
-case 'fullscreen-enter':
-message += ` video entered fullscreen at ${videoTime}`;
-break;
-case 'fullscreen-exit':
-message += ` video exited fullscreen at ${videoTime}`;
-break;
-case 'ended':
-message += ` video ended at ${videoTime}`;
-break;
-case 'stop':
-message += ` video stop at ${videoTime}`;
-break;
-}
-
-console.log(message);
-
-// Send to server with proper event names
-if (eventType === 'jump') {
-logEvent('video-jump', extraData, video ? video.currentTime : 0);
-} else {
-logEvent(`video-${eventType}`, extraData, video ? video.currentTime : 0);
-}
+	const videoTime = videoPosition !== null ? fmt(videoPosition) : (video ? fmt(video.currentTime) : '0.00');
+	logEvent(eventType === 'jump' ? 'video-jump' : `video-${eventType}`, extraData, video ? video.currentTime : 0);
 }
 
 function setupVideoLogging() {
-if (!video) return;
-
-// Reset state when video loads
-video.addEventListener('loadedmetadata', () => {
-videoStartTime = null;
-hasEverPlayed = false;
-lastVideoTime = 0;
-isSeeking = false;
-logEvent('video-loaded', { duration: video.duration }, 0);
-});
-
-video.addEventListener('play', () => {
-// MODIFICATION: Enforce fullscreen mode
-if (!document.fullscreenElement) {
-video.pause();
-alert('Please enter fullscreen to watch the video. Use the button in the video controls.');
-return; // Stop execution
-}
-
-if (!hasEverPlayed) {
-// First time playing - log start
-hasEverPlayed = true;
-videoStartTime = Date.now();
-lastVideoTime = video.currentTime;
-logVideoEvent('play', video.currentTime);
-} else {
-// Resume from pause
-logVideoEvent('play', video.currentTime);
-}
-});
-
-video.addEventListener('pause', () => {
-if (hasEverPlayed) {
-logVideoEvent('pause', video.currentTime);
-}
-});
-
-// Track seeking for jumps
-video.addEventListener('seeking', () => {
-isSeeking = true;
-});
-
-video.addEventListener('seeked', () => {
-if (isSeeking) {
-const from = lastVideoTime;
-const to = video.currentTime;
-
-// Only log jump if it's significant
-if (Math.abs(to - from) >= JUMP_THRESHOLD) {
-logVideoEvent('jump', null, { from, to });
-}
-
-isSeeking = false;
-lastVideoTime = to;
-}
-});
-
-// Update lastVideoTime periodically during playback
-setInterval(() => {
-if (video && !video.paused && !isSeeking) {
-lastVideoTime = video.currentTime;
-}
-}, 500);
-
-// Volume changes
-video.addEventListener('volumechange', () => {
-if (hasEverPlayed) {
-logVideoEvent('volume', video.currentTime);
-}
-});
-
-// Playback rate changes (speed)
-video.addEventListener('ratechange', () => {
-if (hasEverPlayed) {
-logVideoEvent('speed', video.currentTime);
-}
-});
-
-// Video ended
-video.addEventListener('ended', () => {
-logVideoEvent('ended', video.currentTime);
-});
-
-// Error handling
-video.addEventListener('error', (e) => {
-logEvent('video-error', {
-error: video.error ? video.error.code : 'unknown',
-message: video.error ? video.error.message : 'unknown error'
-}, video.currentTime);
-});
-}
-
-// MODIFICATION: Handle fullscreen changes
-document.addEventListener('fullscreenchange', () => {
-  const isFullscreen = document.fullscreenElement !== null;
-
-  if (isFullscreen) {
-    if (hasEverPlayed) {
-      logVideoEvent('fullscreen-enter', video.currentTime);
+  if (!video) return;
+  video.onplay = () => {
+    if (isSeeking) return;
+    if (!document.fullscreenElement) {
+      video.pause();
+      alert('Please enter fullscreen to watch the video.');
+      return;
     }
-  } else {
-    if (currentScreenId !== 'screen-intro') {
+    if (!hasEverPlayed) hasEverPlayed = true;
+    lastVideoTime = video.currentTime;
+    if (currentWatchStart === null) currentWatchStart = video.currentTime;
+    logVideoEvent('play', video.currentTime);
+  };
+  video.onpause = () => {
+    if (isSeeking) return;
+    if (hasEverPlayed) {
+      if (currentWatchStart !== null) {
+          recordWatchedInterval([currentWatchStart, lastVideoTime]);
+          currentWatchStart = null;
+      }
+      logVideoEvent('pause', video.currentTime);
+    }
+  };
+  video.onseeking = () => {
+    isSeeking = true; 
+    if (currentWatchStart !== null) {
+        recordWatchedInterval([currentWatchStart, lastVideoTime]);
+        currentWatchStart = null;
+    }
+  };
+  video.onseeked = () => {
+    const from = lastVideoTime;
+    const to = video.currentTime;
+    if (Math.abs(to - from) >= JUMP_THRESHOLD) {
+      logVideoEvent('jump', null, { from, to });
+    }
+    isSeeking = false;
+    lastVideoTime = to;
+    currentWatchStart = to;
+  };
+  video.ontimeupdate = () => {
+    if (isSeeking || video.paused) return;
+    lastVideoTime = video.currentTime;
+  };
+  video.onended = () => {
+    if (currentWatchStart !== null) {
+        recordWatchedInterval([currentWatchStart, video.duration]);
+        currentWatchStart = null;
+    }
+    logVideoEvent('ended', video.currentTime);
+  };
+  video.onloadedmetadata = () => logEvent('video-loaded', { duration: video.duration, src: video.currentSrc }, 0);
+  video.onvolumechange = () => { if (hasEverPlayed) logVideoEvent('volume'); };
+  video.onratechange = () => { if (hasEverPlayed) logVideoEvent('speed'); };
+  video.onerror = () => logEvent('video-error', { error: video.error?.code || 'unknown', message: video.error?.message || 'unknown' }, video.currentTime);
+}
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    if (!['screen-intro', 'screen-id', 'screen-verifying', 'screen-blocked', 'screen-done'].includes(currentScreenId)) {
       logEvent('fullscreen-forced-exit');
       pauseVideoIfPlaying('fullscreen-exit');
-      logEvent('post-quiz-complete', { forced: true }); //
+      logEvent('post-quiz-complete', { forced: true });
+      logEvent('enter-page', { at: ts(), page: 'finish' }); 
       show('screen-done');
       enterPage('finish');
-
       clearTimeout(batchTimer);
       sendBatch();
     }
   }
 });
 
-/*** === BACK NAVIGATION LOCKING === ***/
-function lockBackNavigation() {
-// Disable all back buttons
-document.querySelectorAll('button.secondary').forEach(btn => {
-btn.disabled = true;
-btn.style.opacity = '0.5';
-btn.style.cursor = 'not-allowed';
-btn.title = 'Back navigation is disabled after moving forward';
-});
-}
-
-/*** === NAVIGATION === ***/
 function enterPage(name) {
-page = name;
-logEvent('enter-page', { at: ts() });
+    page = name;
+    logEvent('enter-page', { at: ts() });
 }
 
 document.getElementById('fullscreen-btn').addEventListener('click', async () => {
@@ -535,27 +516,18 @@ document.getElementById('fullscreen-btn').addEventListener('click', async () => 
 });
 
 document.getElementById('back-1').addEventListener('click', () => {
-if (!hasNavigatedForward) {
-show('screen-intro');
-enterPage('intro');
-}
+  show('screen-intro');
+  enterPage('intro');
 });
 
-document.getElementById('to-pre').addEventListener('click', async () => {
+async function verifyAndSetState() {
   const val = document.getElementById('participant-id').value.trim();
-  if (!val) { alert('Please paste your ID'); return; }
-
+  if (!val) { alert('Please type your Andrew ID'); return; }
   participantId = val;
-
-  // Show verifying screen
   show('screen-verifying');
   enterPage('verifying');
-
-  // Reset progress bar
   const bar = document.getElementById('verify-progress');
   bar.style.width = "0%";
-
-  // Fake progress animation
   let progress = 0;
   const interval = setInterval(() => {
     if (progress < 90) {
@@ -563,7 +535,6 @@ document.getElementById('to-pre').addEventListener('click', async () => {
       bar.style.width = progress + "%";
     }
   }, 200);
-
   try {
     const resp = await fetch(LOGGER_URL, {
       method: 'POST',
@@ -571,173 +542,248 @@ document.getElementById('to-pre').addEventListener('click', async () => {
       body: JSON.stringify([{ participantId: val, checkOnly: true }])
     });
     const result = await resp.json();
-
     clearInterval(interval);
-    bar.style.width = "100%"; // complete
-
+    bar.style.width = "100%";
     setTimeout(() => {
       if (result.blocked) {
         show('screen-blocked');
         enterPage('blocked');
       } else {
-        // --- Video assignment logic ---
-        if (typeof result.treatment === 'undefined') {
-          throw new Error("Server did not return a video treatment assignment.");
+        initialTreatmentGroup = parseInt(result.treatment, 10);
+        let currentAttemptFromServer = parseInt(result.currentAttempt, 10);
+        if (currentAttemptFromServer === 1) {
+             attemptIndex = 1;
+             treatmentGroup = initialTreatmentGroup;
+        } else if (currentAttemptFromServer === 2) {
+             attemptIndex = 2;
+             treatmentGroup = 1 - initialTreatmentGroup;
+        } else {
+             show('screen-blocked');
+             enterPage('blocked');
+             return;
         }
-
-        const treatmentId = result.treatment; // Will be 0 or 1
-        const videoUrl = VIDEOS[treatmentId];
-
-        // Update the video player's source
-        const video = document.getElementById('lecture');
-        const sourceEl = video.querySelector('source');
-        if (sourceEl) {
-          sourceEl.src = videoUrl;
-          video.load(); // This is crucial to make the browser load the new video
-        }
-
-        logEvent('assign-treatment', { treatment: treatmentId });
-
-        // Now lock back-navigation and move to the next screen
-        hasNavigatedForward = true;
-        lockBackNavigation();
+        console.log(`Initial T: ${initialTreatmentGroup}, Current Attempt: ${attemptIndex}, Used T: ${treatmentGroup}`);
+        generateQuizzes();
+        renderQuiz('pre-quiz', preQuestions);
+        renderQuiz('post-quiz', postQuestions);
         show('screen-pre');
         enterPage('pre-test');
+        renderLatexIn(document.getElementById('screen-pre'));
+        clearAllQuizAnswers();
       }
     }, 500);
   } catch (err) {
     clearInterval(interval);
-    console.error("Status check or video assignment failed:", err);
-    alert("Could not verify your ID. Please try again.");
-    show('screen-id'); // Go back to the ID screen on error
+    console.error("Status check failed:", err);
+    alert("Could not verify your ID, please try again.");
+    show('screen-id');
     enterPage('check-andrew-id');
   }
-});
-
-document.getElementById('back-2').addEventListener('click', () => {
-if (!hasNavigatedForward) {
-show('screen-id');
-enterPage('check-andrew-id');
 }
-});
+
+document.getElementById('to-pre').addEventListener('click', verifyAndSetState);
 
 document.getElementById('to-video').addEventListener('click', () => {
-  // Clear any old warnings/highlights
-  document.querySelectorAll('.quiz-item').forEach(el => {
-    el.style.boxShadow = '';
-  });
-  const warnBox = document.getElementById('quiz-warning');
-  if (warnBox) warnBox.remove();
-
-  // Validate pre-quiz answers
   const unanswered = validateQuizAnswers('pre-quiz', preQuestions);
   if (unanswered.length > 0) {
-    showValidationError(unanswered);
+    showValidationError(unanswered, 'pre-quiz');
     logEvent('pre-quiz-incomplete', { unansweredQuestions: unanswered });
     return;
   }
-
   logEvent('pre-quiz-complete');
+  const videoSrc = (treatmentGroup === 0) ? VIDEO_A_URL : VIDEO_B_URL;
+  video.src = videoSrc;
+  video.load();
+  logEvent('video-assigned', { treatment: treatmentGroup, src: videoSrc });
   show('screen-video');
   enterPage('video');
   setupVideoLogging();
 });
 
 document.getElementById('to-post').addEventListener('click', () => {
-// Log video stop when leaving video page
-if (video && hasEverPlayed) {
-logVideoEvent('stop', video.currentTime);
-}
-show('screen-post');
-enterPage('post-quiz-1');
+  if (video && hasEverPlayed) logVideoEvent('stop', video.currentTime);
+  show('screen-post');
+  enterPage('post-quiz');
 });
 
-document.getElementById('back-4').addEventListener('click', () => {
-if (!hasNavigatedForward) {
-show('screen-video');
-enterPage('video');
-}
-});
-
-document.getElementById('to-survey').addEventListener('click', () => {
-    // Validate post-quiz answers
+document.getElementById('to-grade-prompt').addEventListener('click', () => {
     const unanswered = validateQuizAnswers('post-quiz', postQuestions);
     if (unanswered.length > 0) {
-        showValidationError(unanswered);
+        showValidationError(unanswered, 'post-quiz');
         logEvent('post-quiz-incomplete', { unansweredQuestions: unanswered });
         return;
     }
+    const { correct, total } = calculateScore(postQuestions);
+    postQuizScore = correct;
+    logEvent('post-quiz-complete', { score: correct, total: total });
+    
+    if (attemptIndex === 1) {
+        attempt1Score = postQuizScore;
+        document.getElementById('grade-display-x').textContent = attempt1Score;
+        document.getElementById('total-q-1').textContent = total;
 
-    logEvent('post-quiz-complete');
+        // CHANGED: Added the \textcolor{#1f6feb}{...} command to make the score blue.
+        const retakeText = `We would like to give you a chance to improve your grade. Do you want to try again? If you do, and you get a grade of $\\mathbf{Y}$ points, we will give you either $\\mathbf{\\textcolor{#1f6feb}{${attempt1Score}}}$ or $\\mathbf{(\\textcolor{#1f6feb}{${attempt1Score}}+Y)/2}$ points as your final grade, whichever is the highest.`;
+        document.getElementById('retake-prompt-text').innerHTML = retakeText;
+        
+        document.getElementById('attempt-status-1').classList.remove('hidden');
+        document.getElementById('attempt-status-2').classList.add('hidden');
+    } else if (attemptIndex === 2) {
+        document.getElementById('grade-display-y').textContent = postQuizScore;
+        document.getElementById('total-q-2').textContent = total;
+        const finalGrade = Math.max(attempt1Score, (attempt1Score + postQuizScore) / 2).toFixed(2);
+        document.getElementById('attempt1-score-display').textContent = attempt1Score;
+        document.getElementById('attempt2-score').textContent = postQuizScore;
+        document.getElementById('total-q-attempts').textContent = total;
+        document.getElementById('final-score').textContent = finalGrade;
+        document.getElementById('total-q-final').textContent = total;
+        document.getElementById('attempt-status-1').classList.add('hidden');
+        document.getElementById('attempt-status-2').classList.remove('hidden');
+    }
+    
+    show('screen-grade-prompt');
+    enterPage('grade-prompt');
+    renderLatexIn(document.getElementById('screen-grade-prompt')); 
+});
+
+document.getElementById('prompt-yes').addEventListener('click', () => {
+    logEvent('retake-accepted', { 
+        attempt: 1, 
+        scoreX: attempt1Score, 
+        currentTreatment: treatmentGroup,
+        nextTreatment: 1 - treatmentGroup
+    });
+    logEvent('attempt-1-checkpoint', { score: attempt1Score });
+    clearTimeout(batchTimer);
+    sendBatch();
+    
+    // --- CHANGED: Entire block updated to skip the pre-quiz on the second attempt ---
+
+    // 1. Reset state for the new attempt
+    sessionId = crypto.randomUUID(); 
+    sessionStartTime = Date.now();
+    eventCounter = 0;
+    attemptIndex = 2;
+    treatmentGroup = 1 - initialTreatmentGroup; // Swap treatment group
+    
+    // 2. Generate new questions for the post-quiz and prepare it in the background
+    generateQuizzes();
+    renderQuiz('post-quiz', postQuestions); // Renders the *new* post-quiz
+    clearAllQuizAnswers();
+    
+    // 3. Skip pre-quiz and go directly to the video screen
+    const videoSrc = (treatmentGroup === 0) ? VIDEO_A_URL : VIDEO_B_URL;
+    video.src = videoSrc;
+    video.load();
+    logEvent('video-assigned', { treatment: treatmentGroup, src: videoSrc, attempt: 2 });
+    
+    show('screen-video');
+    enterPage('video-retake');
+    setupVideoLogging();
+});
+
+document.getElementById('prompt-no').addEventListener('click', () => {
+    logEvent('retake-declined', { attempt: 1, finalScore: attempt1Score });
+    generateSurveyQuestions();
+    renderQuiz('survey-quiz', surveyQuestions);
     show('screen-survey');
     enterPage('survey');
 });
 
-document.getElementById('to-finish').addEventListener('click', () => {
-    // Validate survey answers
+document.getElementById('to-finish-final').addEventListener('click', () => {
+    logEvent('retake-complete', { attempt: 2, scoreY: postQuizScore });
+    generateSurveyQuestions(); 
+    renderQuiz('survey-quiz', surveyQuestions);
+    show('screen-survey');
+    enterPage('survey-final');
+});
+
+document.getElementById('to-finish-from-survey').addEventListener('click', () => {
     const unanswered = validateQuizAnswers('survey-quiz', surveyQuestions);
     if (unanswered.length > 0) {
-        showValidationError(unanswered);
+        showValidationError(unanswered, 'survey-quiz');
         logEvent('survey-incomplete', { unansweredQuestions: unanswered });
         return;
     }
-
     logEvent('survey-complete');
+    logEvent('enter-page', { at: ts(), page: 'finish' }); 
     show('screen-done');
     enterPage('finish');
-
-    // Force sending the final batch of events immediately upon completion.
-    clearTimeout(batchTimer); // Clear any pending timer
-    sendBatch(); // Send the queue now
+    clearTimeout(batchTimer);
+    sendBatch();
 });
 
+function generateSurveyQuestions() {
+    surveyQuestions = allSurveyQuestions.treatment_0;
+    if (!surveyQuestions) {
+        console.error(`Survey key 'treatment_0' not found in data.`);
+        surveyQuestions = [];
+    }
+}
 
-// === QUIZ VALIDATION ===
 function validateQuizAnswers(containerId, items) {
-const missing = [];
-for (const q of items) {
-const picked = document.querySelector(`input[name="q-${q.no}"]:checked`);
-if (!picked) missing.push(q.no);
-}
-return missing;
+    const missing = [];
+    for (const q of items) {
+        if (!document.querySelector(`input[name="q-${q.id}"]:checked`)) missing.push(q.id);
+    }
+    return missing;
 }
 
-function showValidationError(unanswered) {
-  // Clear previous highlights
-  document.querySelectorAll('.quiz-item').forEach(el => {
-    el.style.boxShadow = '';
-  });
-
-  // Add highlight to each missing one
-  unanswered.forEach(no => {
-    const anyInput = document.querySelector(`input[name="q-${no}"]`);
-    const wrap = anyInput ? anyInput.closest('.quiz-item') : null;
+function showValidationError(unansweredIds, containerId) {
+  document.querySelectorAll('.quiz-item').forEach(el => { el.style.boxShadow = ''; });
+  unansweredIds.forEach(id => {
+    const wrap = document.querySelector(`input[name="q-${id}"]`)?.closest('.quiz-item');
     if (wrap) wrap.style.boxShadow = 'inset 0 0 0 2px #ef4444';
   });
-
-  // Scroll to the first unanswered
-  const first = unanswered[0];
-  const firstInput = document.querySelector(`input[name="q-${first}"]`);
-  firstInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-  // Show a custom inline warning instead of alert
+  document.querySelector(`input[name="q-${unansweredIds[0]}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   let warnBox = document.getElementById('quiz-warning');
   if (!warnBox) {
     warnBox = document.createElement('div');
     warnBox.id = 'quiz-warning';
-    warnBox.style.color = '#b91c1c';
-    warnBox.style.fontWeight = '600';
-    warnBox.style.marginTop = '12px';
-    document.getElementById(currentScreenId).appendChild(warnBox);
+    Object.assign(warnBox.style, {color:'#b91c1c', fontWeight:'600', marginTop:'12px'});
+    document.getElementById(containerId).querySelector('.btnrow').before(warnBox);
   }
-  warnBox.textContent = `⚠️ Please answer question(s): ${unanswered.join(', ')}`;
+  warnBox.textContent = `⚠️ Please answer all questions to continue.`;
+}
+
+function updateIntervalsDisplay() {
+  const displayEl = document.getElementById('intervals-display');
+  if (!displayEl) return;
+  if (watchedIntervals.length === 0) {
+    displayEl.textContent = '[No intervals recorded yet]';
+  } else {
+    const formattedText = watchedIntervals.map(interval => `[${fmt(interval[0])} - ${fmt(interval[1])}]`).join(' ');
+    displayEl.textContent = formattedText;
+  }
 }
 
 /*** === INIT === ***/
-renderQuiz('pre-quiz', preQuestions);
-renderQuiz('post-quiz', postQuestions);
-renderQuiz('survey-quiz', surveyQuestions);
-enterPage('intro');
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('data.txt');
+        if (!response.ok) throw new Error('Network response was not ok.');
+        const encodedData = await response.text();
+        const decodedJsonString = atob(encodedData);
+        const data = JSON.parse(decodedJsonString);
+        easyQuestions = data.easyQuestions;
+        mediumQuestions = data.mediumQuestions;
+        hardQuestions = data.hardQuestions;
+        allSurveyQuestions = data.surveyQuestions;
+    } catch (error) {
+        console.error('Fatal Error: Could not load or parse questions.', error);
+        document.body.innerHTML = '<h1>Error: Could not load the activity. Please contact the administrator.</h1>';
+        return;
+    }
+    video.addEventListener('click', () => {
+      if (video.paused || video.ended) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+    enterPage('intro');
+});
+
 </script>
 </body>
 </html>
